@@ -14,12 +14,15 @@ import traceback
 
 from typing import Any,Dict,List,AnyStr
 
+
 def get_config() -> Dict[str, any]:
+    """Read environment config vars """
     env_config = ConfigManager(prefix="CM_")
     return env_config
 
 
 def value_parser(value: Any) -> Dict[str, any]:
+    """Try to determine what the cookie ingredients are """
     if type(value) is bool:
         return {
             "type": "bool"
@@ -110,6 +113,7 @@ def value_parser(value: Any) -> Dict[str, any]:
 
 
 def scan_cookies(cookies:Dict[str, str]) -> Dict[str, any]:
+    """Scan each cookie, and determine what it's made of"""
     result = dict()
     for cookie in cookies.keys():
         value = cookies.get(cookie)
@@ -120,6 +124,7 @@ def scan_cookies(cookies:Dict[str, str]) -> Dict[str, any]:
     return result
 
 
+# Various generic mungers
 def make_bool(**kwargs) -> bool:
     return True
 
@@ -228,9 +233,10 @@ fake_vals = {
 }
 
 
-def get_cookies(config) -> Dict[str, any]:
-    if False:
-        req = requests.get(config.get('url', 'http://example.com'))
+def get_cookies(target:str=None) -> Dict[str, any]:
+    """Eventually fetch some cookies. For now, use a stock set from Ace"""
+    if target:
+        req = requests.get(target)
         return req.cookies
     else:
         return {
@@ -247,6 +253,7 @@ def get_cookies(config) -> Dict[str, any]:
 
 
 def derive(value:Dict[str, any]) -> Any:
+    """Make a fake version of whatever we think should go into the cookie"""
     if type(value) is list:
         return make_list(value)
     func = fake_vals.get(value.get("type"))
@@ -270,13 +277,18 @@ def munge_cookies(cookie_defs):
 
 def main():
     config = get_config()
-    cookies = get_cookies(config)
+    target = config.get("url")
+    cookies = get_cookies(target)
     pp = pprint.PrettyPrinter(indent=2)
     if cookies:
         scanned = scan_cookies(cookies)
-        pp.pprint(scanned)
-        print("====")
-        pp.pprint(munge_cookies(scanned))
+        if config.get('verbose', True):
+            pp.pprint(scanned)
+            print("====")
+        for i in range(1, config.get('iter', 1)):
+            munged = munge_cookies(scanned)
+            pp.pprint(munged)
+            requests.get(target, cookies=munged)
     else:
         print("No cookies")
 
