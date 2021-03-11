@@ -12,7 +12,7 @@ import requests
 
 import traceback
 
-from typing import Any,Dict,AnyStr
+from typing import Any,Dict,List,AnyStr
 
 def get_config() -> Dict[str, any]:
     env_config = ConfigManager(prefix="CM_")
@@ -120,26 +120,26 @@ def scan_cookies(cookies:Dict[str, str]) -> Dict[str, any]:
     return result
 
 
-def make_bool(**kwargs):
+def make_bool(**kwargs) -> bool:
     return True
 
 
-def make_int(len=10, **kwargs):
+def make_int(len:int=10, **kwargs) -> int:
     return random.choice(range(1,10**len))
 
 
-def make_bytes(len=10, **kwargs):
+def make_bytes(len:int=10, **kwargs) -> bytes:
     return os.urandom(len)
 
 
-def encode_b64(value={}, **kwargs):
+def encode_b64(value:Dict[str, any]={}, **kwargs) -> str:
     val = derive(value)
     if type(val) is str:
         val = val.encode("utf-8")
     return base64.urlsafe_b64encode(val).decode()
 
 
-def make_ipv4(**kwargs):
+def make_ipv4(**kwargs) -> str:
     return "{}.{}.{}.{}".format(
         random.randint(1, 255),
         random.randint(1, 255),
@@ -148,14 +148,14 @@ def make_ipv4(**kwargs):
         )
 
 
-def make_ipv6(**kwargs):
+def make_ipv6(**kwargs) -> str:
     hextets = []
     for i in range(1, 8):
         hextets.append(hex(random.randint(0,2**16))[2:].zfill(4))
     return ":".join(hextets)
 
 
-def make_date(**kwargs):
+def make_date(**kwargs) -> str:
     return "{:02d}/{:02d}/{:04d}".format(
         random.randint(1,12),
         random.randint(1,28),
@@ -163,7 +163,7 @@ def make_date(**kwargs):
     )
 
 
-def make_zulu(**kwargs):
+def make_zulu(**kwargs) -> str:
     return "{:02d}/{:02d}/{:04d}T{:02d}:{:02d}:{:02d}.{:06d}Z".format(
         random.randint(1,12),
         random.randint(1,28),
@@ -175,14 +175,14 @@ def make_zulu(**kwargs):
     )
 
 
-def make_string(len=10, **kwargs):
+def make_string(len:int=10, **kwargs) -> str:
     return "".join(
         random.choice(
             string.ascii_letters + string.digits
         ) for x in range(1, len))
 
 
-def make_list(len=10, value=[], **kwargs):
+def make_list(len:int=10, value:Dict=[], **kwargs) -> List[any]:
     result = []
     for item in value:
         val = derive(value=item)
@@ -190,7 +190,7 @@ def make_list(len=10, value=[], **kwargs):
     return result
 
 
-def make_dict(value={}, **kwargs):
+def make_dict(value:Dict={}, **kwargs) -> Dict[str, any]:
     result = dict()
     if type(value) is not dict:
         return value
@@ -199,17 +199,18 @@ def make_dict(value={}, **kwargs):
     return result
 
 
-def make_json(value={}, **kwargs):
+def make_json(value:Dict={}, **kwargs):
     return json.dumps(derive(value))
 
 
-def make_array(value={}, **kwargs):
+def make_array(value:Dict={}, **kwargs) -> str:
     result = []
     for (key, val) in value.items():
         result.append("{}={}".format(key, derive(val)))
     return "&".join(result)
 
 
+# Pretty sure there's a smarter way to do this...
 fake_vals = {
     "bool": make_bool,
     "int": make_int,
@@ -227,7 +228,7 @@ fake_vals = {
 }
 
 
-def get_cookies(config):
+def get_cookies(config) -> Dict[str, any]:
     if False:
         req = requests.get(config.get('url', 'http://example.com'))
         return req.cookies
@@ -245,7 +246,7 @@ def get_cookies(config):
     }
 
 
-def derive(value):
+def derive(value:Dict[str, any]) -> Any:
     if type(value) is list:
         return make_list(value)
     func = fake_vals.get(value.get("type"))
