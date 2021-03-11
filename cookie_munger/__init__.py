@@ -4,10 +4,13 @@ from datetime import date
 import json
 import base64
 import os
+import pprint
 import random
 import re
 import string
 import requests
+
+import traceback
 
 from typing import Any,Dict,AnyStr
 
@@ -36,7 +39,7 @@ def value_parser(value: Any) -> Dict[str, any]:
         for bit in value.keys():
             result[bit] = value_parser(value[bit])
         return {
-            "type": dict,
+            "type": "dict",
             "value": result
         }
     if type(value) is list:
@@ -54,16 +57,6 @@ def value_parser(value: Any) -> Dict[str, any]:
         }
     except ValueError:
         pass
-    # try base64 first, because of "=" as padding
-    try:
-        bits = base64.urlsafe_b64decode(value)
-        return {
-            "type": "b64",
-            "value": value_parser(bits)
-        }
-    except ValueError:
-        pass
-
     if re.match("^[0-9\.]+$", value):
         return {
             "type": "ip4"
@@ -78,7 +71,7 @@ def value_parser(value: Any) -> Dict[str, any]:
         }
     if re.match("\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.{1,8})?Z", value):
         return {
-            "type": "date-zulu"
+            "type": "date_zulu"
         }
     if re.match("\d{2}/\d{2}/\d{2}", value):
         return {
@@ -95,8 +88,21 @@ def value_parser(value: Any) -> Dict[str, any]:
             "div": ";" if ";" in value else ",",
             "value": arr
         }
+    # try base64 first, because of "=" as padding
+    if re.match("^[a-zA-Z0-9\-\+/_]+=?$", value):
+        try:
+            bits = base64.urlsafe_b64decode(value)
+            try:
+                bits = bits.decode("utf-8")
+            except ValueError:
+                pass
+            return {
+                "type": "b64",
+                "value": value_parser(bits)
+            }
+        except ValueError:
+            pass
     # 🤷🏻‍♂️
-    print(value)
     return {
         "type": "string",
         "len": len(value)
@@ -119,7 +125,7 @@ def make_bool(**kwargs):
 
 
 def make_int(len=10, **kwargs):
-    return range(1,10**len)
+    return random.choice(range(1,10**len))
 
 
 def make_bytes(len=10, **kwargs):
@@ -127,10 +133,13 @@ def make_bytes(len=10, **kwargs):
 
 
 def encode_b64(value={}, **kwargs):
-    return base64.urlsafe_b64encode(json.dumps(value))
+    val = derive(value)
+    if type(val) is str:
+        val = val.encode("utf-8")
+    return base64.urlsafe_b64encode(val).decode()
 
 
-def make_ip4(**kwargs):
+def make_ipv4(**kwargs):
     return "{}.{}.{}.{}".format(
         random.randint(1, 255),
         random.randint(1, 255),
@@ -139,30 +148,30 @@ def make_ip4(**kwargs):
         )
 
 
-def make_ip6(**kwargs):
+def make_ipv6(**kwargs):
     hextets = []
     for i in range(1, 8):
         hextets.append(hex(random.randint(0,2**16))[2:].zfill(4))
-    return hextets.join(":")
+    return ":".join(hextets)
 
 
 def make_date(**kwargs):
-    return "{}/{}/{}".format(
-        random.randint(1,12).zfill(2),
-        random.randint(1,28).zfill(2),
+    return "{:02d}/{:02d}/{:04d}".format(
+        random.randint(1,12),
+        random.randint(1,28),
         random.randint(1970, date.today().year)
     )
 
 
 def make_zulu(**kwargs):
-    return "{}/{}/{}T{}:{}:{}.{}Z".format(
-        random.randint(1,12).zfill(2),
-        random.randint(1,28).zfill(2),
+    return "{:02d}/{:02d}/{:04d}T{:02d}:{:02d}:{:02d}.{:06d}Z".format(
+        random.randint(1,12),
+        random.randint(1,28),
         random.randint(1970, date.today().year),
-        random.randint(0, 23).zfill(2),
-        random.randint(0, 59).zfill(2),
-        random.randint(0, 59).zfill(2),
-        random.randint(0, 999999).zfill(6),
+        random.randint(0, 23),
+        random.randint(0, 59),
+        random.randint(0, 59),
+        random.randint(0, 999999),
     )
 
 
@@ -173,17 +182,32 @@ def make_string(len=10, **kwargs):
         ) for x in range(1, len))
 
 
-def make_list(len=10, value=[], **kwargs):        
-    return '["list"]'
+def make_list(len=10, value=[], **kwargs):
+    result = []
+    for item in value:
+        val = derive(value=item)
+        result.append(val)
+    return result
+
 
 def make_dict(value={}, **kwargs):
-    return {"fake": "dict"}
+    result = dict()
+    if type(value) is not dict:
+        return value
+    for (key, val) in value.items():
+        result[key] = derive(val)
+    return result
+
 
 def make_json(value={}, **kwargs):
-    return {"fake": "json"}
+    return json.dumps(derive(value))
+
 
 def make_array(value={}, **kwargs):
-    return "fake=array"
+    result = []
+    for (key, val) in value.items():
+        result.append("{}={}".format(key, derive(val)))
+    return "&".join(result)
 
 
 fake_vals = {
@@ -195,8 +219,8 @@ fake_vals = {
     "array": make_array,
     "json": make_json,
     "b64": encode_b64,
-    "ip4": make_ip4,
-    "ip6": make_ip6,
+    "ipv4": make_ipv4,
+    "ipv6": make_ipv6,
     "date": make_date,
     "date_zulu": make_zulu,
     "string": make_string,
@@ -221,16 +245,37 @@ def get_cookies(config):
     }
 
 
-def bake_cookies(cookie_defs): 
-    print("Pending...")
+def derive(value):
+    if type(value) is list:
+        return make_list(value)
+    func = fake_vals.get(value.get("type"))
+    if func is None:
+        return make_dict(value=value)
+    val = value.get("value")
+    return func(value=val, len=value.get("len"))
+
+
+def munge_cookies(cookie_defs):
+    result = dict()
+    for (key, value) in cookie_defs.items():
+        try:
+            result[key] = derive(value)
+        except Exception as ex:
+            print(ex)
+            traceback.print_exc()
+            exit()
+    return result
+
 
 def main():
     config = get_config()
     cookies = get_cookies(config)
+    pp = pprint.PrettyPrinter(indent=2)
     if cookies:
         scanned = scan_cookies(cookies)
-        print(scanned)
-        print(bake_cookies(scanned))
+        pp.pprint(scanned)
+        print("====")
+        pp.pprint(munge_cookies(scanned))
     else:
         print("No cookies")
 
