@@ -14,4 +14,19 @@ Because cookies are delicious and edible.
 
 So why not let some site's demographic and analytic database enjoy a few edibles?
 
+## Installing
 
+It's a python thing.
+
+You probably want to run 
+```
+$ python3 -m venv venv
+$ venv/bin/python3 setup.py develop
+```
+If you don't know what `venv` is, you can look or python virtualenv
+
+After that...
+```
+venv/bin/munge -h
+```
+which will show he options.

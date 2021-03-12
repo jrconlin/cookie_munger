@@ -1,4 +1,6 @@
+from collections import OrderedDict
 from config42 import ConfigManager
+from config42.handlers import ArgParse
 from datetime import date
 
 import json
@@ -13,12 +15,6 @@ import requests
 import traceback
 
 from typing import Any,Dict,List,AnyStr
-
-
-def get_config() -> Dict[str, any]:
-    """Read environment config vars """
-    env_config = ConfigManager(prefix="CM_")
-    return env_config
 
 
 def value_parser(value: Any) -> Dict[str, any]:
@@ -81,11 +77,14 @@ def value_parser(value: Any) -> Dict[str, any]:
             "type": "date"
         }
     # is this an array of things?
-    if "&" in value:
+    if "&" in value and "=" in value:
         arr = dict()
         for bit in value.split('&'):
-            (key, val) = bit.split('=')
-            arr[key] = value_parser(val)
+            bits = bit.split('=')
+            if len(bits) > 1:
+                arr[bits[0]] = value_parser(bits[1])
+            else:
+                arr[bits[0]] = ""
         return{
             "type": "array",
             "div": ";" if ";" in value else ",",
@@ -237,7 +236,7 @@ def get_cookies(target:str=None) -> Dict[str, any]:
     """Eventually fetch some cookies. For now, use a stock set from Ace"""
     if target:
         req = requests.get(target)
-        return req.cookies
+        return req.cookies.get_dict()
     else:
         return {
 	"_mzPc": "eyJjb3JyZWxhdGlvbklkIjoiNDYwODQ1MWY5MWVjNDlmNDgxYzFmYzRmZWZiMTk1ODkiLCJpcEFkZHJlc3MiOiIyNjAwOjE3MDA6MTE1MDo4YTZmOjM1ODY6ZjgzYjpiMWE4OmJiNGIiLCJpc0RlYnVnTW9kZSI6ZmFsc2UsImlzQ3Jhd2xlciI6ZmFsc2UsImlzTW9iaWxlIjpmYWxzZSwiaXNUYWJsZXQiOmZhbHNlLCJpc0Rlc2t0b3AiOnRydWUsInZpc2l0Ijp7InZpc2l0SWQiOiJzcUpKT2pmT2lFQ0h1NTd2NzNnNUdnIiwidmlzaXRvcklkIjoiWGFaS0NydnpRa2VTSmQ5Y1ZkTEtwUSIsImlzVHJhY2tlZCI6ZmFsc2UsImlzVXNlclRyYWNrZWQiOmZhbHNlfSwidXNlciI6eyJpc0F1dGhlbnRpY2F0ZWQiOmZhbHNlLCJ1c2VySWQiOiJjZmJlMTFmNzk4MjI0ZGFmOGFjNjc1ZWY2ZWRjNjFhYiIsImZpcnN0TmFtZSI6IiIsImxhc3ROYW1lIjoiIiwiZW1haWwiOiIiLCJpc0Fub255bW91cyI6dHJ1ZSwiYmVoYXZpb3JzIjpbMTAxNCwyMjJdfSwidXNlclByb2ZpbGUiOnsidXNlcklkIjoiY2ZiZTExZjc5ODIyNGRhZjhhYzY3NWVmNmVkYzYxYWIiLCJmaXJzdE5hbWUiOiIiLCJsYXN0TmFtZSI6IiIsImVtYWlsQWRkcmVzcyI6IiIsInVzZXJOYW1lIjoiIn0sImlzRWRpdE1vZGUiOmZhbHNlLCJpc0FkbWluTW9kZSI6ZmFsc2UsIm5vdyI6IjIwMjEtMDMtMDlUMjM6NTM6NDMuMzg3ODMyMloiLCJjcmF3bGVySW5mbyI6eyJpc0NyYXdsZXIiOmZhbHNlLCJjYW5vbmljYWxVcmwiOiIvaG9tZSJ9LCJjdXJyZW5jeVJhdGVJbmZvIjp7fX0=",
@@ -254,6 +253,8 @@ def get_cookies(target:str=None) -> Dict[str, any]:
 
 def derive(value:Dict[str, any]) -> Any:
     """Make a fake version of whatever we think should go into the cookie"""
+    if value == '':
+        return ''
     if type(value) is list:
         return make_list(value)
     func = fake_vals.get(value.get("type"))
@@ -275,22 +276,3 @@ def munge_cookies(cookie_defs):
     return result
 
 
-def main():
-    config = get_config()
-    target = config.get("url")
-    cookies = get_cookies(target)
-    pp = pprint.PrettyPrinter(indent=2)
-    if cookies:
-        scanned = scan_cookies(cookies)
-        if config.get('verbose', True):
-            pp.pprint(scanned)
-            print("====")
-        for i in range(1, config.get('iter', 1)):
-            munged = munge_cookies(scanned)
-            pp.pprint(munged)
-            requests.get(target, cookies=munged)
-    else:
-        print("No cookies")
-
-
-main()
