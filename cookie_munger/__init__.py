@@ -90,6 +90,42 @@ def scan_cookies(cookies: Dict[str, str]) -> Dict[str, any]:
     return result
 
 
+def make_version() -> str:
+    nums = []
+    for i in range(0, random.randint(1, 4)):
+        nums.append(str(random.randint(0, 999)))
+    return ".".join(nums)
+
+
+def make_useragent() -> str:
+    OS = ["X11", "Windows NT", "Macintosh", "ChromeOS", "iOS", "iPad", "Timex"]
+    Architecture = [
+        "Linux x86_64",
+        "Linux x86_32",
+        "Win64; x64",
+        "Win64; x32",
+        "Mac OS X",
+        "K",
+        "SAMSUNG",
+        "CPU iPhone OS",
+    ]
+    Browser = ["Chrome", "AppleWebKit", "Gecko", "Edge", "Netscape"]
+    Like = ["", "(KHTML, like Gecko)", ()]
+    base = "Mozilla/5.0 ({os}; {architecture}) {browser}/{version} {like}".format(
+        os=random.choice(OS),
+        architecture=random.choice(Architecture),
+        browser=random.choice(Browser),
+        like=random.choice(Like),
+        version=make_version(),
+    )
+    for i in range(0, random.randint(0, 3)):
+        base += " {browser}/{version}".format(
+            browser=random.choice(Browser), version=make_version()
+        )
+    print(base)
+    return base
+
+
 # Various generic mungers
 def make_bool(**kwargs) -> bool:
     return True
@@ -198,42 +234,33 @@ fake_vals = {
 }
 
 
-def get_cookies(req=[None | requests.Response]) -> Dict[str, any]:
-    """Eventually fetch some cookies. For now, use a stock set from Ace"""
-    if req:
-        return req.cookies.get_dict()
-    else:
-        return {
-            "_mzPc": "eyJjb3JyZWxhdGlvbklkIjoiNDYwODQ1MWY5MWVjNDlmNDgxYzFmYzRmZWZiMTk1ODkiLCJpcEFkZHJlc3MiOiIyNjAwOjE3MDA6MTE1MDo4YTZmOjM1ODY6ZjgzYjpiMWE4OmJiNGIiLCJpc0RlYnVnTW9kZSI6ZmFsc2UsImlzQ3Jhd2xlciI6ZmFsc2UsImlzTW9iaWxlIjpmYWxzZSwiaXNUYWJsZXQiOmZhbHNlLCJpc0Rlc2t0b3AiOnRydWUsInZpc2l0Ijp7InZpc2l0SWQiOiJzcUpKT2pmT2lFQ0h1NTd2NzNnNUdnIiwidmlzaXRvcklkIjoiWGFaS0NydnpRa2VTSmQ5Y1ZkTEtwUSIsImlzVHJhY2tlZCI6ZmFsc2UsImlzVXNlclRyYWNrZWQiOmZhbHNlfSwidXNlciI6eyJpc0F1dGhlbnRpY2F0ZWQiOmZhbHNlLCJ1c2VySWQiOiJjZmJlMTFmNzk4MjI0ZGFmOGFjNjc1ZWY2ZWRjNjFhYiIsImZpcnN0TmFtZSI6IiIsImxhc3ROYW1lIjoiIiwiZW1haWwiOiIiLCJpc0Fub255bW91cyI6dHJ1ZSwiYmVoYXZpb3JzIjpbMTAxNCwyMjJdfSwidXNlclByb2ZpbGUiOnsidXNlcklkIjoiY2ZiZTExZjc5ODIyNGRhZjhhYzY3NWVmNmVkYzYxYWIiLCJmaXJzdE5hbWUiOiIiLCJsYXN0TmFtZSI6IiIsImVtYWlsQWRkcmVzcyI6IiIsInVzZXJOYW1lIjoiIn0sImlzRWRpdE1vZGUiOmZhbHNlLCJpc0FkbWluTW9kZSI6ZmFsc2UsIm5vdyI6IjIwMjEtMDMtMDlUMjM6NTM6NDMuMzg3ODMyMloiLCJjcmF3bGVySW5mbyI6eyJpc0NyYXdsZXIiOmZhbHNlLCJjYW5vbmljYWxVcmwiOiIvaG9tZSJ9LCJjdXJyZW5jeVJhdGVJbmZvIjp7fX0=",
-            "_mzvr": "XaZKCrvzQkeSJd9cVdLKpQ",
-            "_mzvs": "nn",
-            "_mzvt": "sqJJOjfOiECHu57v73g5Gg",
-            "closestStoreCode": "16192",
-            "recentlyViewed": "7502578",
-            "sb-sf-at-prod": "pt=&at=MAXacwhjRLX0xo4rmKZNQnAThzX1V2TmcvRXFI+cyJDs+Kf78Rc/ivPEsTC9drWxVmq2gKI6Dl1oWJ/HdJY+2BhkyBV+r5fM9YJRsuTXlUGWheI6SNS8IKj9KI4w2tY8d96njLuTyTuozRK0D5tvmfBQ5qWfp8fFq+EZRIKG7wXZ7xwfGLIlgBBhiqUpevq8Wgy94pkIQSKvj8oPYfCw33MqO/VORvTqYNOdH4+mzaIa9L4CLFR+dzJItWmRmkOgEk0k5ctRNtMXK2gVuTKwjxMcVEHAsjBY1IuB/fXk8xuZ+hWBpkQqcKkYPTtfDg7H",
-            "sb-sf-at-prod-s": "pt=&at=MAXacwhjRLX0xo4rmKZNQnAThzX1V2TmcvRXFI+cyJDs+Kf78Rc/ivPEsTC9drWxVmq2gKI6Dl1oWJ/HdJY+2BhkyBV+r5fM9YJRsuTXlUGWheI6SNS8IKj9KI4w2tY8d96njLuTyTuozRK0D5tvmfBQ5qWfp8fFq+EZRIKG7wXZ7xwfGLIlgBBhiqUpevq8Wgy94pkIQSKvj8oPYfCw33MqO/VORvTqYNOdH4+mzaIa9L4CLFR+dzJItWmRmkOgEk0k5ctRNtMXK2gVuTKwjxMcVEHAsjBY1IuB/fXk8xuZ+hWBpkQqcKkYPTtfDg7H&dt=2021-03-09T23:29:10.9286050Z",
-            "userBehaviors": "[1014,222]",
-        }
-
-
 def get_includes(target: str = None) -> Dict[str, Dict[str, any]]:
     log = logging.getLogger("cookie_munger")
     results = {}
+    headers = {
+        "User-Agent": make_useragent(),
+        "Accept-Language": "en-US;en;q=0.5",
+        "Accept": "*/*",
+        "DNT": "1",
+    }
+
     if target:
-        log.debug(f"Scanning {target}")
+        log.debug(f"📡Scanning {target}")
         # First get the list of includes
         resp = requests.get(target).content
-        results[target] = requests.get(target).cookies.get_dict()
+        results[target] = requests.get(target, headers=headers).cookies.get_dict()
         parsed = BeautifulSoup(resp, "html.parser")
         items = parsed.find_all("script")
-        log.debug(f".. {len(items)} scripts...")
+        log.debug(f"📡👀 {len(items)} scripts...")
         for item in items:
             domain = item.attrs.get("src")
             if domain and not domain.startswith("/"):
                 if domain not in results:
                     try:
-                        results[domain] = requests.get(domain).cookies.get_dict()
-                        log.debug(f".... {domain} {len(results[domain])} cookies")
+                        results[domain] = requests.get(
+                            domain, headers=headers
+                        ).cookies.get_dict()
+                        log.debug(f"📡🍪 {domain} {len(results[domain])} cookies")
                     except requests.exceptions.MissingSchema:
                         import pdb
 
@@ -241,14 +268,16 @@ def get_includes(target: str = None) -> Dict[str, Dict[str, any]]:
                         print(domain)
 
         items = parsed.find_all("img")
-        log.debug(f".. {len(items)} imgs...")
+        log.debug(f"📡👀 {len(items)} imgs...")
         for item in items:
             domain: str = item.attrs.get("href")
             if domain and not domain.startswith("/"):
                 if domain not in results:
                     try:
-                        results[domain] = requests.get(domain).cookies.get_dict()
-                        log.debug(f".... {domain} {len(results[domain])} cookies")
+                        results[domain] = requests.get(
+                            domain, headers=headers
+                        ).cookies.get_dict()
+                        log.debug(f"📡🍪 {domain} {len(results[domain])} cookies")
                     except requests.exceptions.MissingSchema:
                         import pdb
 
