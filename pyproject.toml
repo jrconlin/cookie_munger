@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "cookie-munger"
+version = "0.2.0"
+description = "Giving internet cookie services a few edibles."
+authors = ["jr conlin <src+cookie@jrconlin.com>"]
+license = "MPLv2"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+config42 = "^0.4.4"
+requests = "^2.32.3"
+beautifulsoup4 = "^4.12.3"
+
+[tool.poetry.scripts]
+cookie-munger = "cookie_munger.__main__:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

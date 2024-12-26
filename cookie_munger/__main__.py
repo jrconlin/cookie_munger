@@ -81,14 +81,14 @@ def main():
     for target, cookies in all_targets.items():
         if len(cookies) == 0:
             next
-        log.info(f"🎯Targeting {target}")
+        log.info(f"🎯 Targeting {target}")
         scanned = scan_cookies(cookies)
         for i in range(0, config.count):
             munged = munge_cookies(scanned)
             if len(munged):
-                log.debug(f"🤢munged: {munged}")
+                log.debug(f"🤢 munged: {munged}")
             if not config.get("dryrun"):
-                log.info(f"🤮Munging cookies to {target}")
+                log.info(f"🤮 Munging cookies to {target}")
                 result = requests.get(target, cookies=munged)
                 if result.status_code == 500:
                     wwcd += 1
