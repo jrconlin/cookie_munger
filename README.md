@@ -3,7 +3,7 @@
 
 This is a stupid idea.
 
-It came about because of [a tweet](https://twitter.com/jrconlin/status/1369435923037970434) about sites that force you to accept cookies.
+It came about because of a micro-post about sites that force you to accept cookies.
 
 I looked at [a site](https://www.acehardware.com/) and noticed a bunch of fairly complicated cookies being stuffed into my browser. Since I work on backend stuff and know exactly how folks love to screw with anything you hand them, I decided to create something that screws with what they've given me.
 
@@ -18,17 +18,22 @@ So why not let some site's demographic and analytic database enjoy a few edibles
 
 It's a python thing.
 
-You probably want to run 
+You probably want to run
+
+```bash
+poetry install
 ```
-$ python3 -m venv venv
-$ venv/bin/python3 setup.py develop
-```
-If you don't know what `venv` is, you can look or python virtualenv
+
+(Hint if poetry isn't installed on your computer [it's pretty easy to install](https://python-poetry.org/) )
 
 After that...
+
+```bash
+poetry run cookie-munger -h
 ```
-venv/bin/munge -h
-```
+
+Optionally, you can use the env val `PYTHON_LOG` to set the logging level (e.g. `PYTHON_LOG=debug poetry run cookie-munger`)
+
 which will show he options.
 
 ## What the hell does this do?
@@ -39,7 +44,7 @@ Cookie munger, well, munges the values that get returned.
 
 I could have just made up a bunch of random crap and returned that. But, well, that's no fun. I mean it is, but it's not really fun.
 
-No, cookie munger is a bit more clever about things. 
+No, cookie munger is a bit more clever about things.
 
 If a cookie looks like a date, cookie_munger picks a random date from the UNIX EPOCH and returns it.
 

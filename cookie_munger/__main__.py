@@ -51,7 +51,7 @@ def get_config() -> Dict[str, any]:
         ),
         dict(
             key="count",
-            name="Hammer Count",
+            name="HammerCount",
             description="How many times to feed the munged cookies back to the site",
             source=dict(argv=["-c", "--count"]),
             default=1,
