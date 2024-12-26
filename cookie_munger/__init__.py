@@ -262,27 +262,22 @@ def get_includes(target: str = None) -> Dict[str, Dict[str, any]]:
                         ).cookies.get_dict()
                         log.debug(f"📡🍪 {domain} {len(results[domain])} cookies")
                     except requests.exceptions.MissingSchema:
-                        import pdb
-
-                        pdb.set_trace()
                         print(domain)
+        for dtype in ["img", "link"]:
+            items = parsed.find_all(dtype)
+            log.debug(f"📡👀 {len(items)} {dtype}s...")
+            for item in items:
+                domain: str = item.attrs.get("href")
+                if domain and not domain.startswith("/"):
+                    if domain not in results:
+                        try:
+                            results[domain] = requests.get(
+                                domain, headers=headers
+                            ).cookies.get_dict()
+                            log.debug(f"📡🍪 {domain} {len(results[domain])} cookies")
+                        except requests.exceptions.MissingSchema:
+                            print(domain)
 
-        items = parsed.find_all("img")
-        log.debug(f"📡👀 {len(items)} imgs...")
-        for item in items:
-            domain: str = item.attrs.get("href")
-            if domain and not domain.startswith("/"):
-                if domain not in results:
-                    try:
-                        results[domain] = requests.get(
-                            domain, headers=headers
-                        ).cookies.get_dict()
-                        log.debug(f"📡🍪 {domain} {len(results[domain])} cookies")
-                    except requests.exceptions.MissingSchema:
-                        import pdb
-
-                        pdb.set_trace()
-                        print(domain)
     return results
 
 
