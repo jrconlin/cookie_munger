@@ -122,6 +122,28 @@ def scan_cookies(cookies:Dict[str, str]) -> Dict[str, any]:
             result[cookie] = ""
     return result
 
+def make_version() -> str:
+    nums = []
+    for i in range(0, random.randint(1,4)):
+        nums.append(str(random.randint(0,999)))
+    return ".".join(nums)
+
+def make_useragent() -> str:
+    OS = ["X11", "Windows NT", "Macintosh", "ChromeOS", "iOS", "iPad", "Timex"]
+    Architecture = ["Linux x86_64", "Linux x86_32", "Win64; x64", "Win64; x32", "Mac OS X", "K", "SAMSUNG", "CPU iPhone OS"]
+    Browser = ["Chrome", "AppleWebKit", "Gecko", "Edge", "Netscape"]
+    Like = ["", "(KHTML, like Gecko)", ()]
+    base = "Mozilla/5.0 ({os}; {architecture}) {browser}/{version} {like}".format(
+        os=random.choice(OS),
+        architecture=random.choice(Architecture),
+        browser=random.choice(Browser),
+        like=random.choice(Like),
+        version=make_version()
+    )
+    for i in range(0, random.randint(0, 3)):
+        base += " {browser}/{version}".format(browser=random.choice(Browser), version=make_version())
+    print(base)
+    return base
 
 # Various generic mungers
 def make_bool(**kwargs) -> bool:
@@ -234,8 +256,15 @@ fake_vals = {
 
 def get_cookies(target:str=None) -> Dict[str, any]:
     """Eventually fetch some cookies. For now, use a stock set from Ace"""
+    headers={
+        "User-Agent": make_useragent(),
+        "Accept-Language": "en-US;en;q=0.5",
+        "Accept": "*/*",
+        "DNT": "1"
+    }
+
     if target:
-        req = requests.get(target)
+        req = requests.get(target, headers=headers)
         return req.cookies.get_dict()
     else:
         return {
